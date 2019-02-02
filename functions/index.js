@@ -5,92 +5,59 @@ admin.initializeApp(firebaseConfig);
 const settings = { /* your settings... */ timestampsInSnapshots: true };
 // firestore.settings(settings);
 admin.firestore().settings(settings);
-exports.upadateCart = functions.firestore
-  .document("Carts/CartDetailFromClient")
-  .onUpdate((change, context) => {
-    // Get an object representing the document
-    // e.g. {'name': 'Marie', 'age': 66}
-    const newValue = change.after.data();
 
-    //   // ...or the previous value before this update
-    //   const previousValue = change.before.data();
-    const db = admin.firestore();
-    const refCart = db.collection("Carts");
-    let cartItemDetail = {};
-    for (let key in newValue) {
-      //Get Product Data From Database
-      let productData = {};
-      db.collection("Products")
-        .doc(key)
-        .get()
-        .then(res =>
-          res.exists
-            ? (productData = res.data())
-            : console.log("No product data")
-        )
-        .catch(err => console.log(err));
-
-      //Check Promotion Status Of Product and Check Which Promotion Scheme Will Apply
-      const {
-        event,
-        image,
-        price,
-        description,
-        promoStatus,
-        promoType
-      } = productData;
-      const quantity = newValue[key].quantity;
-      let quantityGetDiscount, percentGetDiscount, totalAfterPromo;
-      const total = quantity * price;
-
-      if (promoStatus) {
-        console.log(promoType.match(/.+_/g), "match switch case");
-
-        switch (promoType.match(/.+_/g)) {
-          case "groupBuy_offPrice_":
-            quantityGetDiscount = parseInt(promoStatus.match(/\d+/g)[0]);
-            percentGetDiscount = parseInt(promoStatus.match(/\d+/g)[1]);
-            if (quantity < quantityGetDiscount) {
-              totalAfterPromo = total;
-            } else {
-              let numberOfProductDiscount = Math.floor(
-                quantity / quantityGetDiscount
-              );
-              totalAfterPromo =
-                total - numberOfProductDiscount * percentGetDiscount;
-            }
-            break;
-          case "groupBuy_getFree_":
-            quantityGetDiscount = parseInt(promoStatus.match(/\d+/g)[0]);
-            percentGetDiscount = 100;
-            if (quantity < quantityGetDiscount) {
-              totalAfterPromo = total;
-            } else {
-              let numberOfProductDiscount = Math.floor(
-                quantity / quantityGetDiscount
-              );
-              totalAfterPromo =
-                total - numberOfProductDiscount * percentGetDiscount;
-            }
-            break;
-          case "directDiscount_":
-            percentGetDiscount = parseInt(promoStatus.match(/\d+/g)[0]);
-            totalAfterPromo = (total * (100 - percentGetDiscount)) / 100;
-            break;
-          default:
-            totalAfterPromo = total;
-            break;
+exports.getDiscountPrice = functions.https.onCall((data, context) => {
+  const cart = data;
+  console.log(cart, "cart");
+  for (let key in cart) {
+    const { quantity, promoStatus, promoType, price } = cart[key];
+    let quantityGetDiscount, percentGetDiscount, totalAfterPromo;
+    const total = quantity * price;
+    //Check Promotion Status Of Product and Check Which Promotion Scheme Will Apply
+    if (promoStatus) {
+      if (/groupBuy_offPrice/.test(promoType)) {
+        quantityGetDiscount = Number(promoType.match(/\d+/g)[0]);
+        percentGetDiscount = Number(promoType.match(/\d+/g)[1]);
+        if (quantity < quantityGetDiscount) {
+          totalAfterPromo = total;
+        } else {
+          let numOfProductDiscount = Math.floor(
+            quantity / (quantityGetDiscount + 1)
+          );
+          totalAfterPromo =
+            total - (numOfProductDiscount * percentGetDiscount * price) / 100;
         }
+      } else if (/groupBuy_setPrice/.test(promoType)) {
+        let numPromoApply = Number(promoType.match(/\d+/g)[0]);
+        let totalApply = Number(promoType.match(/\d+/g)[1]);
+
+        if (numPromoApply > quantity) {
+          totalAfterPromo = total;
+        } else {
+          let numOfProductDiscount = Math.floor(quantity / numPromoApply);
+          totalAfterPromo =
+            (quantity - numPromoApply * numOfProductDiscount) * price +
+            totalApply * numOfProductDiscount;
+        }
+      } else if (/groupBuy_getFree/.test(promoType)) {
+        quantityGetDiscount = Number(promoType.match(/\d+/g)[0]);
+        percentGetDiscount = 100;
+        if (quantity < quantityGetDiscount) {
+          totalAfterPromo = total;
+        } else {
+          let numOfProductDiscount = Math.floor(quantity / quantityGetDiscount);
+          totalAfterPromo = total - numOfProductDiscount * price;
+        }
+      } else if (/directDiscount/.test(promoType)) {
+        percentGetDiscount = Number(promoType.match(/\d+/g));
+        totalAfterPromo = (total * (100 - percentGetDiscount)) / 100;
       }
-      cartItemDetail[key] = {
-        quantity,
-        total,
-        totalAfterPromo
-      };
+    } else {
+      totalAfterPromo = total;
     }
-    refCart
-      .doc("AfterApplyPro")
-      .set(cartItemDetail)
-      .catch(err => console.log(err));
-    console.log(cartItemDetail);
-  });
+    cart[key].totalAfterPromo = totalAfterPromo;
+  }
+  return {
+    cart
+  };
+});
