@@ -14,7 +14,6 @@ export default class ProductPage extends React.Component {
     isUpdateCart: false
   };
   componentDidMount() {
-    console.log("GrandChild did mount.");
     const firestore = firebase.firestore();
     const productRef = firestore.collection("Products");
     productRef.get().then(res => {

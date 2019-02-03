@@ -1,0 +1,11 @@
+.promoTime {
+  display: grid;
+  grid-template-columns: 50% 50%;
+}
+.checkbox {
+  display: flex;
+  flex-direction: column;
+}
+.checkbox > * {
+  margin-bottom: 10px;
+}
