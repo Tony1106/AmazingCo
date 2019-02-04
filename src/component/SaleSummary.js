@@ -7,19 +7,18 @@ export default function SaleSummary({ data }) {
   for (let key in data) {
     total = total + data[key].price * data[key].quantity;
     totalAfterPromo = totalAfterPromo + data[key].totalAfterPromo;
-    console.log(total, data[key].price * data[key].quantity, "data");
   }
   totalSave = total - totalAfterPromo;
   return (
     <>
       <div>
-        Total <span>{`${total}$`}</span>
+        Total <span>{`${Math.round(total)}$`}</span>
       </div>
       <div>
-        You Save <span>{`${totalSave}$`}</span>
+        You Save <span>{`${Math.round(totalSave)}$`}</span>
       </div>
       <div>
-        You pay <span>{`${totalAfterPromo}$`}</span>
+        You pay <span>{`${Math.round(totalAfterPromo)}$`}</span>
       </div>
     </>
   );

@@ -8,7 +8,6 @@ admin.firestore().settings(settings);
 
 exports.getDiscountPrice = functions.https.onCall((data, context) => {
   const cart = data;
-  console.log(cart, "cart");
   for (let key in cart) {
     const { quantity, promoStatus, promoType, price } = cart[key];
     let quantityGetDiscount, percentGetDiscount, totalAfterPromo;

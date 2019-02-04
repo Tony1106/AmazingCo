@@ -3,7 +3,6 @@ import { Checkbox } from "semantic-ui-react";
 export default function CheckBox(props) {
   console.log(props);
   function handleChange(e, data) {
-    console.log(data);
     if (data.checked) {
       props.addProductApplyPromo(data.value);
     } else {
@@ -25,7 +24,7 @@ export default function CheckBox(props) {
               Yes (if choose will override the old promotion scheme)
             </span>
           ) : (
-            <span style={{ color: "yellow" }}>No</span>
+            <span style={{ color: "red" }}>No</span>
           )}
         </p>{" "}
       </div>

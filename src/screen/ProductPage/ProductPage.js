@@ -1,9 +1,9 @@
 import React from "react";
 import firebase from "firebase";
-import ProductItem from "../component/ProductItem";
-import CartItem from "../component/CartItem";
-import SaleSummary from "../component/SaleSummary";
-import styles from "./styles/ProductPage.module.css";
+import ProductItem from "../../component/ProductItem";
+import CartItem from "../../component/CartItem";
+import SaleSummary from "../../component/SaleSummary";
+import styles from "./ProductPage.module.css";
 import { Button } from "semantic-ui-react";
 import PropTypes from "prop-types";
 export default class ProductPage extends React.Component {
@@ -24,7 +24,6 @@ export default class ProductPage extends React.Component {
         products.push(data);
       });
       this.setState({ products });
-      console.log(products);
     });
   }
   handleAddToCart(productAddToCart) {
@@ -60,9 +59,6 @@ export default class ProductPage extends React.Component {
   }
   handleUpdateCart() {
     let { cart } = this.state;
-
-    let jsonCart = JSON.stringify(cart);
-    console.log(jsonCart);
     const firestore = firebase.firestore();
     const productRef = firestore
       .collection("Carts")
@@ -78,8 +74,7 @@ export default class ProductPage extends React.Component {
     productRef.set(cart);
   }
   render() {
-    let { products, cart, applyPromoData } = this.state;
-    console.log(cart);
+    let { products, applyPromoData } = this.state;
     let cartItem = [];
     let productItem = products
       ? products.map((product, i) => (
@@ -123,6 +118,25 @@ export default class ProductPage extends React.Component {
               <SaleSummary data={applyPromoData} />
             ) : null}
           </div>
+        </div>
+        <div>
+          How to use:
+          <ul>
+            <li>Change the quantity you want to add to cart</li>
+            <li>
+              Click add to cart the product you want to add, this data will be
+              store in the temporary memory
+            </li>
+            <li>
+              After finish adding product to cart, click the button Update cart
+              on the top-right
+            </li>
+            <li>
+              It will send a request to server to calculate the price after
+              apply promotion
+            </li>
+            <li>The server send back the response and update the cart</li>
+          </ul>
         </div>
       </div>
     );

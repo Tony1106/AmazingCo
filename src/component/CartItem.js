@@ -2,16 +2,12 @@ import React from "react";
 import { Image } from "semantic-ui-react";
 import styles from "./CartItem.module.css";
 export default function CartItem(props) {
-  console.log(props.applyPromoData);
   const {
-    description,
     event,
     price,
     image,
     quantity,
-    totalAfterPromo,
-    promoStatus,
-    promoType
+    totalAfterPromo
   } = props.applyPromoData;
   return (
     <div className={styles.itemWrap}>

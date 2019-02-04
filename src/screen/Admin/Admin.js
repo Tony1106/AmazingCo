@@ -6,10 +6,10 @@ import {
   Divider,
   Button
 } from "semantic-ui-react";
-import TimeInput from "../component/TimeInput";
-import CheckBox from "../component/CheckBox";
-import PromoInput from "../component/PromoInput";
-import styles from "./styles/Admin.module.css";
+import TimeInput from "../../component/TimeInput";
+import CheckBox from "../../component/CheckBox";
+import PromoInput from "../../component/PromoInput";
+import styles from "./Admin.module.css";
 import moment from "moment";
 import firebase from "firebase";
 export default class Admin extends Component {
@@ -23,7 +23,6 @@ export default class Admin extends Component {
     promoEnd: "",
     products: [],
     productApplyPromo: {},
-    isLoaded: false,
     promoName: ""
   };
   componentDidMount() {
@@ -39,7 +38,6 @@ export default class Admin extends Component {
           products.push(data);
         });
         this.setState({ products });
-        console.log(products);
       })
       .catch(err => console.log(err));
   }
@@ -50,8 +48,6 @@ export default class Admin extends Component {
     this.setState({ promoEnd: time });
   };
   handleChangeX = x => {
-    console.log(x, "x");
-
     this.setState({ x });
   };
   handleChangeY = y => {
@@ -62,13 +58,18 @@ export default class Admin extends Component {
   };
   handleValidation = () => {
     let formIsVaild = true;
-    let { promoTypeValue, x, y, promoStart, promoEnd, promoName } = this.state;
+    let {
+      promoTypeValue,
+      x,
+      y,
+      promoStart,
+      promoEnd,
+      productApplyPromo
+    } = this.state;
     let error = {};
 
     //Promo type
     if (promoTypeValue === 0) {
-      console.log("valid type");
-
       formIsVaild = false;
       error["promoType"] = "Please choose one type of promotion";
     }
@@ -96,15 +97,20 @@ export default class Admin extends Component {
       formIsVaild = false;
       error["promoTypeWithRequireY"] = "Please input the value";
     }
+    //Choose product
+    if (Object.values(productApplyPromo).length == 0) {
+      formIsVaild = false;
+      error["chooseProduct"] = "Please choose at least one product";
+    }
     //Time Start
     if (!promoStart) {
       formIsVaild = false;
-      error["timeStart"] = "Please input the promotion time start";
+      error["promoStart"] = "Please input the promotion time start";
     }
     //Time End
     if (!promoEnd) {
       formIsVaild = false;
-      error["timeEnd"] = "Please input the promotion time end";
+      error["promoEnd"] = "Please input the promotion time end";
     }
     //Validate time end
     if (!moment(promoStart).isBefore(promoEnd)) {
@@ -116,7 +122,7 @@ export default class Admin extends Component {
     return formIsVaild;
   };
   handleCancel() {
-    console.log("cancel");
+    window.location.reload();
   }
   handleAddProduct(value) {
     let { productApplyPromo } = this.state;
@@ -145,10 +151,11 @@ export default class Admin extends Component {
       } = this.state;
       let promoType = "";
       let promoText = "";
+      let promoStatus = true;
       switch (promoTypeValue) {
         case 1:
           promoType = "directDiscount_" + x;
-          promoText = "Get discount " + x + " for each product";
+          promoText = "Get discount " + x + " % for each product";
           break;
         case 2:
           promoType = "groupBuy_getFree_" + x;
@@ -162,6 +169,11 @@ export default class Admin extends Component {
           promoType = "groupBuy_setPrice_" + x + "+" + y;
           promoText = `Buy ${x} for ${y}$`;
           break;
+        case 5:
+          promoType = "No promotion at the moment";
+          promoText = `No promotion at the moment`;
+          promoStatus = false;
+          break;
         default:
           break;
       }
@@ -173,27 +185,24 @@ export default class Admin extends Component {
           .doc(key)
           .update({
             promoType,
-            promoStatus: true,
+            promoStatus,
             promoEnd,
             promoStart,
             promoText
           })
+          .then(() => {
+            alert("Update Finish");
+            window.location.reload();
+          })
           .catch(err => console.log(err));
       }
-      console.log(promoType, "promo type");
     } else {
       console.log("Form is not validate");
     }
   };
 
   render() {
-    let {
-      promoTypeValue,
-      error,
-      products,
-      isLoaded,
-      productApplyPromo
-    } = this.state;
+    let { promoTypeValue, error, products } = this.state;
     let promoType = [
       { key: "directDiscount_X", value: 1, text: "Take Percent Off" },
       { key: "groupBuy_getFree_X", value: 2, text: "Buy X get one Free" },
@@ -202,7 +211,8 @@ export default class Admin extends Component {
         value: 3,
         text: "Buy X get the (X+1) Y Off"
       },
-      { key: "groupBuy_setPrice_X+Y", value: 4, text: "Combo: Buy X for Y$" }
+      { key: "groupBuy_setPrice_X+Y", value: 4, text: "Combo: Buy X for Y$" },
+      { key: "removePromo", value: 5, text: "Remove Promotion" }
     ];
     let productChoice = products
       ? products.map(item => (
@@ -214,7 +224,6 @@ export default class Admin extends Component {
           />
         ))
       : null;
-    console.log(productApplyPromo, "product apply promo");
 
     return (
       <Container>
@@ -232,8 +241,8 @@ export default class Admin extends Component {
           <div>
             <p>Type in your promotion time end</p>
             <TimeInput datePick={time => this.handleTimeEnd(time)} />
-            {error.timeEnd ? (
-              <p style={{ color: "red" }}>{error.timeEnd}</p>
+            {error.promoEnd ? (
+              <p style={{ color: "red" }}>{error.promoEnd}</p>
             ) : null}
             {error.timeValid ? (
               <p style={{ color: "red" }}>{error.timeValid}</p>
@@ -262,6 +271,9 @@ export default class Admin extends Component {
           <div>
             <p>Choose the product you want to apply the product for</p>
             <div className={styles.checkbox}>{productChoice}</div>
+            {error.chooseProduct ? (
+              <p style={{ color: "red" }}>{error.chooseProduct}</p>
+            ) : null}
           </div>
           <Divider />
           <div>

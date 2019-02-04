@@ -18,7 +18,6 @@ export default class TimeInput extends Component {
     return this.setState({ date: newDateString });
   };
   render() {
-    const { date, format, mode, inputFormat } = this.state;
     return <DateTime onChange={this.handleChange} closeOnTab={true} />;
   }
 }
