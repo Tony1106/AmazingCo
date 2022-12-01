@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import firebase from "firebase";
 import firebaseConfig from "./config/firebaseConfig";
 firebase.initializeApp(firebaseConfig);
+  "8",
 
 ReactDOM.render(
   <BrowserRouter>
